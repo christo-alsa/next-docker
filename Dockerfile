@@ -1,20 +1,26 @@
-# Étape 1 : Utiliser l'image officielle de Node.js
-FROM node:18-alpine
+# Étape 1 : Construire l'application
+FROM node:20-alpine AS builder
 
-# Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers package.json et package-lock.json
+# Copier package.json et package-lock.json pour installer uniquement les dépendances nécessaires
 COPY package*.json ./
 
-# Installer les dépendances
 RUN npm install
 
-# Copier le reste des fichiers de l'application
+# Copier le reste du projet
 COPY . .
 
-# Exposer le port utilisé par Next.js
+# Construire l'application Next.js
+RUN npm run build
+
+# Étape 2 : Exécuter l'application
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+COPY --from=builder /app ./
+
 EXPOSE 3000
 
-# Démarrer l'application
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]
